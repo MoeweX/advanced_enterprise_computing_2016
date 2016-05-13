@@ -1,6 +1,10 @@
 package aec;
 
+import org.apache.log4j.Logger;
+
 public class Mastermind {
+	
+	static Logger logger = Logger.getLogger(Mastermind.class.getName());
 
 	/*
 	 * Wir brauchen:
@@ -14,7 +18,7 @@ public class Mastermind {
 	
 	
 	public static void main(String[] args) {
-		System.out.println("Hello World!");
+		logger.info("Hello World");
 	}
 
 }
