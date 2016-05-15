@@ -8,6 +8,7 @@ import javax.xml.parsers.DocumentBuilder;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+
 import org.w3c.dom.Node;
 
 public class xmlReader {
@@ -16,9 +17,8 @@ public class xmlReader {
 		sync, async, quorum
 	}
 
-	public static void main(String[] args) throws ParserConfigurationException, SAXException, IOException {
+	public HashMap<String, methods> readXMLConfiguration(String myNode, String fileName) throws ParserConfigurationException, SAXException, IOException {
 
-		String myNode = "nodeA";
 		String startNode;
 		String type;
 		String srcNodetrg;
@@ -27,7 +27,7 @@ public class xmlReader {
 
 		HashMap<String, methods> h = new HashMap<String, methods>();
 
-		File inputConfig = new File("config.xml");
+		File inputConfig = new File(fileName);
 		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
 		Document doc = docBuilder.parse(inputConfig);
@@ -72,5 +72,7 @@ public class xmlReader {
 				}
 			}
 		}
+		return h;
 	}
 }
+
