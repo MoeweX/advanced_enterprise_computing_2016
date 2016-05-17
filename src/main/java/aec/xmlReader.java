@@ -1,3 +1,5 @@
+package aec;
+
 import java.util.HashMap;
 import java.io.File;
 import java.io.IOException;
@@ -13,6 +15,19 @@ import org.w3c.dom.Node;
 
 public class xmlReader {
 
+	/*
+	 * Rename Configuration(Pfad xml, Pfad ips)
+	 * 
+	 *	Method
+	 *		type = synch, async, quorum
+	 *		qsize = int
+	 *		List<Zielknoten>
+	 *
+	 *	HashMap<String, Method> replicationPaths = Startknoten -> Method // falls nichts dann null
+	 *	HashMap<String, String> hosts = Knoten -> IP und Port
+	 *	String myNode
+	 */
+	
 	public enum methods {
 		sync, async, quorum
 	}
