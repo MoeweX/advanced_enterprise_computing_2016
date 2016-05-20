@@ -23,7 +23,7 @@ public class Configuration {
 	private String replicationPathsURI;
 	private HashMap<String, Method> replicationPaths = new HashMap<String, Method>(); // startnode -> Method
 	//TODO replicationPaths muss wahrscheinlich String -> List<Method> enthalten
-	protected int sendPort = 8085;
+	private int sendPort = 8085;
 	private int receivePort = 8086;
 	
 	public Configuration(String myNode, String replicationPathsURI, String hostsURI) {
@@ -45,17 +45,33 @@ public class Configuration {
 	public String getHostIPForNode(String node) {
 		return hosts.get(node);
 	}
+	
+	public String getHostIPStringForNode(String node) {
+		return node + " = " + hosts.get(node);
+	}
 
 	public Method getReplicationPathsForNode(String node) {
 		return replicationPaths.get(node);
 	}
 	
+	public String getReplicationPathsStringForNode(String node) {
+		return "Startnode = " + node + " -> " + replicationPaths.get(node);
+	}
+	
 	public int getSendPort() {
 		return sendPort;
+	}
+	
+	public void setSendPort(int port) {
+		this.sendPort = port;
 	}
 
 	public int getReceivePort() {
 		return receivePort;
+	}
+	
+	public void setReceivePort(int port) {
+		this.receivePort = port;
 	}
 
 	public void parseHostIPs() throws ParserConfigurationException, SAXException, IOException {
@@ -156,4 +172,5 @@ public class Configuration {
 		}
 		return true;
 	}
+	
 }
