@@ -7,18 +7,18 @@ public class Memory {
 	
 	static Logger logger = Logger.getLogger(Memory.class.getName());
 
-	private HashMap<Integer, String> memory = new HashMap<Integer, String>();
+	private static HashMap<Integer, String> memory = new HashMap<Integer, String>();
 	
-	public void put(Integer key, String value) {
+	public static void put(Integer key, String value) {
 		memory.put(key, value);
 		logger.info(key + " -> " + value);
 	}
 	
-	public String get(Integer key) {
+	public static String get(Integer key) {
 		return memory.get(key);
 	}
 	
-	public String delete(Integer key) {
+	public static String delete(Integer key) {
 		return memory.remove(key);
 	}
 	
