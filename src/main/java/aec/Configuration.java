@@ -21,8 +21,7 @@ public class Configuration {
 	private String hostsURI;
 	private HashMap<String, String> hosts = new HashMap<String, String>(); //node -> ip:port
 	private String replicationPathsURI;
-	private HashMap<String, Method> replicationPaths = new HashMap<String, Method>(); // startnode -> Method
-	//TODO replicationPaths muss wahrscheinlich String -> List<Method> enthalten
+	private HashMap<String, List<Quorum>> replicationPaths = new HashMap<String, List<Quorum>>(); // startnode -> List<Quorum>
 	private int receivePort = 8086;
 	
 	public Configuration(String myNode, String replicationPathsURI, String hostsURI) {
@@ -48,7 +47,7 @@ public class Configuration {
 		return node + " = " + hosts.get(node);
 	}
 
-	public Method getReplicationPathsForStartNode(String node) {
+	public List<Quorum> getReplicationPathsForStartNode(String node) {
 		return replicationPaths.get(node);
 	}
 	
@@ -92,7 +91,7 @@ public class Configuration {
 		String srcNode;
 		int qsize;
 	
-		HashMap<String, Method> h = new HashMap<String, Method>();
+		HashMap<String, Quorum> h = new HashMap<String, Quorum>();
 	
 		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
@@ -116,7 +115,7 @@ public class Configuration {
 							trgNode =  m.getAttributes().getNamedItem("target").getNodeValue();
 							target.add(trgNode);
 							qsize = 0;
-							Method m1 = new Method (type, qsize ,target);
+							Quorum m1 = new Quorum (type, qsize ,target);
 							h.put(srcNode, m1);
 	
 						} else if (type.equals("sync")) {
@@ -124,7 +123,7 @@ public class Configuration {
 							trgNode = m.getAttributes().getNamedItem("target").getNodeValue();
 							target.add(trgNode);
 							qsize = 0;
-							Method m2 = new Method (type, qsize ,target);
+							Quorum m2 = new Quorum (type, qsize ,target);
 							h.put(srcNode, m2);
 	
 						} else if (type.equals("quorum")) {
@@ -138,7 +137,7 @@ public class Configuration {
 									target.add(trgNode);
 								}
 							}
-							Method m3 = new Method (type, qsize ,target);
+							Quorum m3 = new Quorum (type, qsize ,target);
 							h.put(srcNode, m3);
 						}
 					}

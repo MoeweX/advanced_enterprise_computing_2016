@@ -32,9 +32,10 @@ public class Communication {
 	
 	public void replicateData(String startNode, Integer key, String value) {
 		// get targets //TODO must return list instead of only one Method
-		Method m = Mastermind.c.getReplicationPathsForStartNode(startNode);
+		//Quorum m = Mastermind.c.getReplicationPathsForStartNode(startNode);
 		
-		if (m.type == Method.methods.sync) {
+		/*
+		if (m.type == Quorum.methods.sync) {
 			String targetnode = m.zielKnoten.get(0);
 			String ip = Mastermind.c.getHostIPForNode(targetnode);
 			Integer port = Mastermind.c.getHostPortForNode(targetnode);		
@@ -47,11 +48,12 @@ public class Communication {
 					logger.info("Received an answer: " + resp.getResponseMessage());
 				}
 			});
-		} else if (m.type == Method.methods.async) {
+		} else if (m.type == Quorum.methods.async) {
 			//TODO
-		} else if (m.type == Method.methods.quorum) {
+		} else if (m.type == Quorum.methods.quorum) {
 			//TODO
 		}
+		*/
 	}
 	
 	class SyncRequestHandler implements IRequestHandler {
