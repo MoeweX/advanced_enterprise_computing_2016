@@ -1,6 +1,11 @@
 package aec;
 
+import java.io.IOException;
+
+import javax.xml.parsers.ParserConfigurationException;
+
 import org.apache.log4j.Logger;
+import org.xml.sax.SAXException;
 
 public class Mastermind {
 	
@@ -16,8 +21,15 @@ public class Mastermind {
 	 */
 	
 	
-	public static void main(String[] args) {
-		logger.info("Hello World");
+	public static void main(String[] args) throws ParserConfigurationException, SAXException, IOException {
+		String replicationPathsURI = "https://dl.dropboxusercontent.com/u/23672500/examplepath.xml";
+		String hostsURI = "";
+		String myNode = "nodeC";
+		Configuration c = new Configuration(myNode, replicationPathsURI, hostsURI);
+		c.parseReplicationPaths();
+		logger.info(c.getReplicationPathsForNode("nodeA"));
+		logger.info(c.getReplicationPathsForNode("nodeB"));
+		logger.info(c.getReplicationPathsForNode("nodeC"));
 	}
 
 }

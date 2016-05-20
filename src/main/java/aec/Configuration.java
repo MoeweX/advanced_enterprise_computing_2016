@@ -1,29 +1,63 @@
 package aec;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.io.File;
-import java.io.IOException;
 
+import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.DocumentBuilder;
+
 import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
-
-import org.w3c.dom.Node;
 
 public class Configuration {
 
 	
-	private HashMap<String, String> mappingNodeIP;
+	private HashMap<String, String> hosts = new HashMap<String, String>(); //node -> IP
+	private HashMap<String, Method> replicationPaths = new HashMap<String, Method>(); // startnode -> Method
+	//TODO replicationPaths muss wahrscheinlich String -> List<Method> enthalten
 	private String myNode; 
-	private String fileName;
-	  
+	private String replicationPathsURI;
+	private String hostsURI;
 	
-	public HashMap<String, Method> readXMLConfiguration(String myNode, String fileName) throws ParserConfigurationException, SAXException, IOException {
+	public Configuration(String myNode, String replicationPathsURI, String hostsURI) {
+		super();
+		this.myNode = myNode;
+		this.replicationPathsURI = replicationPathsURI;
+		this.hostsURI = hostsURI;
+	}
+
+	public Method getReplicationPathsForNode(String node) {
+		return replicationPaths.get(node);
+	}
+	
+	/**
+	 * Tests, whether all keys of replicationPaths are present in hosts.
+	 * @return true, if keys are present
+	 */
+	public boolean testAllNodeInformationProvided() {
+		//TODO 
+		return false;
+	}
+	
+	/**
+	 * Returns the IP for a given node, if present. Otherwise null.
+	 * @param node
+	 * @return IP of node
+	 */
+	public String getHostIPForNode(String node) {
+		return hosts.get(node);
+	}
+	
+	public void parseHostIPs() {
+		//TODO
+	}
+	
+	public void parseReplicationPaths() throws ParserConfigurationException, SAXException, IOException {
 
 		String startNode;
 		String type;
@@ -34,10 +68,9 @@ public class Configuration {
 
 		HashMap<String, Method> h = new HashMap<String, Method>();
 
-		File inputConfig = new File(fileName);
 		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
-		Document doc = docBuilder.parse(inputConfig);
+		Document doc = docBuilder.parse(replicationPathsURI);
 		doc.getDocumentElement().normalize();
 
 		NodeList pathList = doc.getElementsByTagName("path");
@@ -86,6 +119,6 @@ public class Configuration {
 				}
 			}
 		}
-		return h;
+		replicationPaths = h;
 	}
 }

@@ -24,4 +24,17 @@ public class Method {
 		this.qsize = qsize;
 		this.zielKnoten = zielKnoten;
 	}
+	
+	@Override
+	public String toString() {
+		if (type == methods.quorum) {
+			return "Quoroum with size " + qsize + " to nodes " + zielKnoten;
+		} else if (type == methods.async) {
+			return "Async to node " + zielKnoten.get(0);
+		} else if (type == methods.sync) {
+			return "Sync to node " + zielKnoten.get(0);
+		} else {
+			return "Invalid method";
+		}
+	}
 }
