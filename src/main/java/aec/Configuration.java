@@ -17,12 +17,14 @@ import org.xml.sax.SAXException;
 public class Configuration {
 
 	
-	private HashMap<String, String> hosts = new HashMap<String, String>(); //node -> IP
-	private HashMap<String, Method> replicationPaths = new HashMap<String, Method>(); // startnode -> Method
 	//TODO replicationPaths muss wahrscheinlich String -> List<Method> enthalten
-	private String myNode; 
-	private String replicationPathsURI;
+	private String myNode;
 	private String hostsURI;
+	private HashMap<String, String> hosts = new HashMap<String, String>(); //node -> IP
+	private String replicationPathsURI;
+	private HashMap<String, Method> replicationPaths = new HashMap<String, Method>(); // startnode -> Method
+	protected int sendPort = 8085;
+	private int receivePort = 8086;
 	
 	public Configuration(String myNode, String replicationPathsURI, String hostsURI) {
 		super();
@@ -31,19 +33,10 @@ public class Configuration {
 		this.hostsURI = hostsURI;
 	}
 
-	public Method getReplicationPathsForNode(String node) {
-		return replicationPaths.get(node);
+	public String getMyNode() {
+		return myNode;
 	}
-	
-	/**
-	 * Tests, whether all keys of replicationPaths are present in hosts.
-	 * @return true, if keys are present
-	 */
-	public boolean testAllNodeInformationProvided() {
-		//TODO 
-		return false;
-	}
-	
+
 	/**
 	 * Returns the IP for a given node, if present. Otherwise null.
 	 * @param node
@@ -52,34 +45,53 @@ public class Configuration {
 	public String getHostIPForNode(String node) {
 		return hosts.get(node);
 	}
-	
-	public void parseHostIPs() {
-		//TODO
+
+	public Method getReplicationPathsForNode(String node) {
+		return replicationPaths.get(node);
 	}
 	
-	public void parseReplicationPaths() throws ParserConfigurationException, SAXException, IOException {
+	public int getSendPort() {
+		return sendPort;
+	}
 
+	public int getReceivePort() {
+		return receivePort;
+	}
+
+	public void parseHostIPs() throws ParserConfigurationException, SAXException, IOException {
+		HashMap<String, Method> h = new HashMap<String, Method>();
+		
+		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
+		Document doc = docBuilder.parse(hostsURI);
+		doc.getDocumentElement().normalize();
+		
+		
+	}
+
+	public void parseReplicationPaths() throws ParserConfigurationException, SAXException, IOException {
+	
 		String startNode;
 		String type;
 		List <String> target = new ArrayList<String>();;
 		String trgNode;
 		String srcNode;
 		int qsize;
-
+	
 		HashMap<String, Method> h = new HashMap<String, Method>();
-
+	
 		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
 		Document doc = docBuilder.parse(replicationPathsURI);
 		doc.getDocumentElement().normalize();
-
+	
 		NodeList pathList = doc.getElementsByTagName("path");
 		for (int temp1 = 0; temp1 < pathList.getLength(); temp1++) {
 			Node n1 = pathList.item(temp1);
 			startNode = n1.getAttributes().getNamedItem("start").getNodeValue();
-
+	
 			if (startNode.equals(myNode)) {
-
+	
 				NodeList L = doc.getElementsByTagName("link");
 				for (int a = 0; a < L.getLength(); a++) {
 					Node m = L.item(a);
@@ -92,7 +104,7 @@ public class Configuration {
 							qsize = 0;
 							Method m1 = new Method (type, qsize ,target);
 							h.put(srcNode, m1);
-
+	
 						} else if (type.equals("sync")) {
 							srcNode = m.getAttributes().getNamedItem("src").getNodeValue();
 							trgNode = m.getAttributes().getNamedItem("target").getNodeValue();
@@ -100,7 +112,7 @@ public class Configuration {
 							qsize = 0;
 							Method m2 = new Method (type, qsize ,target);
 							h.put(srcNode, m2);
-
+	
 						} else if (type.equals("quorum")) {
 							srcNode = m.getAttributes().getNamedItem("src").getNodeValue();
 							qsize = Integer.parseInt( m.getAttributes().getNamedItem("qsize").getNodeValue());
@@ -120,5 +132,14 @@ public class Configuration {
 			}
 		}
 		replicationPaths = h;
+	}
+
+	/**
+	 * Tests, whether all keys of replicationPaths are present in hosts.
+	 * @return true, if keys are present
+	 */
+	public boolean testAllNodeInformationProvided() {
+		//TODO 
+		return false;
 	}
 }
