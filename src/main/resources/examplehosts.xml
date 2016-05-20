@@ -1,5 +1,5 @@
 <hosts>
-	<host node="nodeA" ip="localhostA"/>
-	<host node="nodeB" ip="localhostB"/>
-	<host node="nodeC" ip="localhostC"/>
+	<host node="nodeA" ip="localhost:8081"/>
+	<host node="nodeB" ip="localhost:8082"/>
+	<host node="nodeC" ip="localhost:8082"/>
 </hosts>

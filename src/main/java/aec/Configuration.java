@@ -19,11 +19,10 @@ public class Configuration {
 	
 	private String myNode;
 	private String hostsURI;
-	private HashMap<String, String> hosts = new HashMap<String, String>(); //node -> IP
+	private HashMap<String, String> hosts = new HashMap<String, String>(); //node -> ip:port
 	private String replicationPathsURI;
 	private HashMap<String, Method> replicationPaths = new HashMap<String, Method>(); // startnode -> Method
 	//TODO replicationPaths muss wahrscheinlich String -> List<Method> enthalten
-	private int sendPort = 8085;
 	private int receivePort = 8086;
 	
 	public Configuration(String myNode, String replicationPathsURI, String hostsURI) {
@@ -37,33 +36,24 @@ public class Configuration {
 		return myNode;
 	}
 
-	/**
-	 * Returns the IP for a given node, if present. Otherwise null.
-	 * @param node
-	 * @return IP of node
-	 */
 	public String getHostIPForNode(String node) {
-		return hosts.get(node);
+		return hosts.get(node).split(":")[0];
 	}
 	
-	public String getHostIPStringForNode(String node) {
+	public int getHostPortForNode(String node) {
+		return Integer.parseInt(hosts.get(node).split(":")[1]);
+	}
+	
+	public String getHostStringForNode(String node) {
 		return node + " = " + hosts.get(node);
 	}
 
-	public Method getReplicationPathsForNode(String node) {
+	public Method getReplicationPathsForStartNode(String node) {
 		return replicationPaths.get(node);
 	}
 	
-	public String getReplicationPathsStringForNode(String node) {
+	public String getReplicationPathsStringForStartNode(String node) {
 		return "Startnode = " + node + " -> " + replicationPaths.get(node);
-	}
-	
-	public int getSendPort() {
-		return sendPort;
-	}
-	
-	public void setSendPort(int port) {
-		this.sendPort = port;
 	}
 
 	public int getReceivePort() {
@@ -74,7 +64,7 @@ public class Configuration {
 		this.receivePort = port;
 	}
 
-	public void parseHostIPs() throws ParserConfigurationException, SAXException, IOException {
+	public void parseHosts() throws ParserConfigurationException, SAXException, IOException {
 		HashMap<String, String> h = new HashMap<String, String>();
 		
 		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();

@@ -35,7 +35,6 @@ public class Mastermind {
 		options.addOption("p", "replicationPathsURI", true, "URI to download replicationPaths file");
 		options.addOption("h", "hostsURI", true, "URI to download hosts file");
 		options.addOption("n", "myNode", true, "the name of this node");
-		options.addOption("s", "sendPort", true, "used port for sending [8085]");
 		options.addOption("r", "receivePort", true, "used port for receiving [8086]");
 		// automatically generate the help statement
 		CommandLine line = parser.parse(options, args);
@@ -56,26 +55,22 @@ public class Mastermind {
 		Mastermind.c = new Configuration(line.getOptionValue("n"), 
 				line.getOptionValue("p"), line.getOptionValue("h"));
 		
-		//print not required options if set
-		if (line.hasOption("s")) {
-			logger.info("sendPort: " + line.getOptionValue("s"));
-			Mastermind.c.setSendPort(Integer.parseInt(line.getOptionValue("s"))); 
-		}
 		if (line.hasOption("r")) {
 			logger.info("receiveport: " + line.getOptionValue("r"));
 			Mastermind.c.setReceivePort(Integer.parseInt(line.getOptionValue("r"))); 
 		}
 		
 		c.parseReplicationPaths();
-		logger.info(c.getReplicationPathsStringForNode("nodeA"));
-		logger.info(c.getReplicationPathsStringForNode("nodeB"));
-		logger.info(c.getReplicationPathsStringForNode("nodeC"));
-		c.parseHostIPs();
+		logger.info(c.getReplicationPathsStringForStartNode("nodeA"));
+		logger.info(c.getReplicationPathsStringForStartNode("nodeB"));
+		logger.info(c.getReplicationPathsStringForStartNode("nodeC"));
+		c.parseHosts();
 		logger.info("All information provided?: " + c.testAllNodeInformationProvided());
-		logger.info(c.getHostIPStringForNode("nodeA"));
-		logger.info(c.getHostIPStringForNode("nodeB"));
-		logger.info(c.getHostIPStringForNode("nodeC"));
-
+		logger.info(c.getHostStringForNode("nodeA"));
+		logger.info(c.getHostStringForNode("nodeB"));
+		logger.info(c.getHostStringForNode("nodeC"));
+		
+		//TODO enter option to add value to this node
 	}
 
 }
