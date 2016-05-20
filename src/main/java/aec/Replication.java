@@ -3,12 +3,12 @@ package aec;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Quorum {
+public class Replication {
 
 	private int qsize;
 	private List<String> targetNodes = new ArrayList<String>();
 
-	public Quorum(int qsize, List<String> targetNodes) {
+	public Replication(int qsize, List<String> targetNodes) {
 		this.qsize = qsize;
 		this.targetNodes = targetNodes;
 	}
