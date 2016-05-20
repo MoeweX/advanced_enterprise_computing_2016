@@ -1,6 +1,8 @@
 package aec;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.io.File;
 import java.io.IOException;
 
@@ -13,34 +15,24 @@ import org.xml.sax.SAXException;
 
 import org.w3c.dom.Node;
 
-public class xmlReader {
+public class XMLReader {
 
-	/*
-	 * Rename Configuration(Pfad xml, Pfad ips)
-	 * 
-	 *	Method
-	 *		type = synch, async, quorum
-	 *		qsize = int
-	 *		List<Zielknoten>
-	 *
-	 *	HashMap<String, Method> replicationPaths = Startknoten -> Method // falls nichts dann null
-	 *	HashMap<String, String> hosts = Knoten -> IP und Port
-	 *	String myNode
-	 */
 	
-	public enum methods {
-		sync, async, quorum
-	}
-
-	public HashMap<String, methods> readXMLConfiguration(String myNode, String fileName) throws ParserConfigurationException, SAXException, IOException {
+	HashMap<String, String> mappingNodeIP;
+	String myNode; 
+	String fileName;
+	  
+	
+	public HashMap<String, Method> readXMLConfiguration(String myNode, String fileName) throws ParserConfigurationException, SAXException, IOException {
 
 		String startNode;
 		String type;
-		String srcNodetrg;
+		List <String> target = new ArrayList<String>();;
+		String trgNode;
 		String srcNode;
-		String qSize;
+		int qsize;
 
-		HashMap<String, methods> h = new HashMap<String, methods>();
+		HashMap<String, Method> h = new HashMap<String, Method>();
 
 		File inputConfig = new File(fileName);
 		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
@@ -61,27 +53,34 @@ public class xmlReader {
 					if (m.getParentNode() == n1) {
 						type = m.getAttributes().getNamedItem("type").getNodeValue();
 						if (type.equals("async")) {
-							srcNodetrg = m.getAttributes().getNamedItem("src").getNodeValue() + "To"
-									+ m.getAttributes().getNamedItem("target").getNodeValue();
-							h.put(srcNodetrg, methods.async);
+							srcNode = m.getAttributes().getNamedItem("src").getNodeValue();
+							trgNode =  m.getAttributes().getNamedItem("target").getNodeValue();
+							target.add(trgNode);
+							qsize = 0;
+							Method m1 = new Method (type, qsize ,target);
+							h.put(srcNode, m1);
 
 						} else if (type.equals("sync")) {
-							srcNodetrg = m.getAttributes().getNamedItem("src").getNodeValue() + "To"
-									+ m.getAttributes().getNamedItem("target").getNodeValue();
-							h.put(srcNodetrg, methods.sync);
+							srcNode = m.getAttributes().getNamedItem("src").getNodeValue();
+							trgNode = m.getAttributes().getNamedItem("target").getNodeValue();
+							target.add(trgNode);
+							qsize = 0;
+							Method m2 = new Method (type, qsize ,target);
+							h.put(srcNode, m2);
 
 						} else if (type.equals("quorum")) {
 							srcNode = m.getAttributes().getNamedItem("src").getNodeValue();
-							qSize = m.getAttributes().getNamedItem("qsize").getNodeValue();
+							qsize = Integer.parseInt( m.getAttributes().getNamedItem("qsize").getNodeValue());
 							NodeList M = doc.getElementsByTagName("qparticipant");
 							for (int b = 0; b < M.getLength(); b++) {
 								Node g = M.item(b);
 								if (g.getParentNode() == m) {
-									srcNodetrg = srcNode + "To" + g.getAttributes().getNamedItem("name").getNodeValue()
-											+ "." + qSize;
-									h.put(srcNodetrg, methods.quorum);
+									trgNode = g.getAttributes().getNamedItem("name").getNodeValue();
+									target.add(trgNode);
 								}
 							}
+							Method m3 = new Method (type, qsize ,target);
+							h.put(srcNode, m3);
 						}
 					}
 				}
@@ -90,4 +89,3 @@ public class xmlReader {
 		return h;
 	}
 }
-
