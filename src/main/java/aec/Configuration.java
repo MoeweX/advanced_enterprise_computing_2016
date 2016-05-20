@@ -15,12 +15,12 @@ import org.xml.sax.SAXException;
 
 import org.w3c.dom.Node;
 
-public class XMLReader {
+public class Configuration {
 
 	
-	HashMap<String, String> mappingNodeIP;
-	String myNode; 
-	String fileName;
+	private HashMap<String, String> mappingNodeIP;
+	private String myNode; 
+	private String fileName;
 	  
 	
 	public HashMap<String, Method> readXMLConfiguration(String myNode, String fileName) throws ParserConfigurationException, SAXException, IOException {
