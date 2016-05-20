@@ -13,6 +13,14 @@ public class Replication {
 		this.targetNodes = targetNodes;
 	}
 	
+	public int getQsize() {
+		return qsize;
+	}
+
+	public List<String> getTargetNodes() {
+		return targetNodes;
+	}
+
 	@Override
 	public String toString() {
 		return "Quoroum with size " + qsize + " to nodes " + targetNodes;

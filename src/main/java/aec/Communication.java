@@ -1,6 +1,9 @@
 package aec;
 
 import java.io.IOException;
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.List;
 
 import org.apache.log4j.Logger;
 
@@ -20,8 +23,7 @@ public class Communication {
 	
 	public Communication() {
 		RequestHandlerRegistry reg = RequestHandlerRegistry.getInstance();
-		reg.registerHandler("sync", new SyncRequestHandler());
-		//TODO register other handlers
+		reg.registerHandler("messages", new MessageRequestHandler());
 		try {
 			receiver = new Receiver(Mastermind.c.getReceivePort());
 		} catch (IOException e) {
@@ -30,38 +32,62 @@ public class Communication {
 		}
 	}
 	
-	public void replicateData(String startNode, Integer key, String value) {
-		// get targets //TODO must return list instead of only one Method
-		//Quorum m = Mastermind.c.getReplicationPathsForStartNode(startNode);
+	public void replicateData(Message message) {
+		QuorumCollection quorumCollection = new QuorumCollection(message.getKey(), message.getValue());
 		
-		/*
-		if (m.type == Quorum.methods.sync) {
-			String targetnode = m.zielKnoten.get(0);
-			String ip = Mastermind.c.getHostIPForNode(targetnode);
-			Integer port = Mastermind.c.getHostPortForNode(targetnode);		
-			Sender s = new Sender(ip, port);
-			Request req = new Request("TestSend", "sync", Mastermind.c.getMyNode());
+		List<Replication> replications = Mastermind.c.getReplicationPathsForStartNode(message.getStartNode());
+		//save Sender and Request, because it must be send AFTER the quorumCollection was created
+		HashMap<Sender, Request> senderRequest = new HashMap<Sender,Request>();
+		for (Replication r: replications) {
+			Quorum quorum = new Quorum(r.getQsize());
+			//do this for all nodes of quorum
+			for (String node: r.getTargetNodes()) {
+				Sender s = new Sender(Mastermind.c.getHostIPForNode(node), Mastermind.c.getHostPortForNode(node));
+				Request req = new Request(message, "messages", Mastermind.c.getMyNode());
+				//add ID to quorum
+				quorum.addSendRequestID(req.getRequestId());
+				//save Sender and Request to hashmap for later usage
+				senderRequest.put(s, req);
+			}
+			quorumCollection.addQuorum(quorum);
+		}
+		
+		// now send all messages and create callbacks
+		for (Sender s: senderRequest.keySet()) {
+			Request req = senderRequest.get(s);
 			s.sendMessageAsync(req, new AsyncCallbackRecipient() {
 				
 				@Override
 				public void callback(Response resp) {
-					logger.info("Received an answer: " + resp.getResponseMessage());
+					//add ID to the correct Quorum
+					if (!quorumCollection.addReceivedRequestIDToItsQuorum(resp.getResponseMessage())) {
+						logger.warn("ID " + resp.getResponseMessage() + " could not be assigned to a Quorum!");
+					}
+					
 				}
 			});
-		} else if (m.type == Quorum.methods.async) {
-			//TODO
-		} else if (m.type == Quorum.methods.quorum) {
-			//TODO
 		}
-		*/
+		
+		while (!quorumCollection.writeValueToMemory()) {
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+		// data written to memory, we can answer now the one who send a message to us
 	}
 	
-	class SyncRequestHandler implements IRequestHandler {
+	class MessageRequestHandler implements IRequestHandler {
 
 		@Override
 		public Response handleRequest(Request req) {
-			logger.info("Received a message: " + (String) req.getItems().get(0));
-			Response resp = new Response("Received message!", true, req);
+			Message message = (Message) req.getItems().get(0);
+			logger.info("Received " + message + " from " + 
+					req.getOriginator() + " with ID " + req.getRequestId());
+			replicateData(message);
+			//when we are here, we successfully replicated the data and wrote it in our memory
+			Response resp = new Response(req.getRequestId(), true, req);
 			return resp;
 		}
 
@@ -71,5 +97,39 @@ public class Communication {
 		}
 		
 	}
+	
+	class Message implements Serializable {
+
+		private static final long serialVersionUID = 1886301432166925753L;
+		
+		private String startNode;
+		private Integer key;
+		private String value;
+		
+		public Message(String startNode, Integer key, String value) {
+			this.startNode = startNode;
+			this.key = key;
+			this.value = value;
+		}
+
+		public String getStartNode() {
+			return startNode;
+		}
+
+		public Integer getKey() {
+			return key;
+		}
+
+		public String getValue() {
+			return value;
+		}
+		
+		@Override
+		public String toString() {
+			return "Message(startNode="+startNode+",key="+key+",value="+value+")";
+		}
+		
+	}
+	
 	
 }
