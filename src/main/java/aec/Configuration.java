@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -15,14 +16,13 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 public class Configuration {
-
 	
-	//TODO replicationPaths muss wahrscheinlich String -> List<Method> enthalten
 	private String myNode;
 	private String hostsURI;
 	private HashMap<String, String> hosts = new HashMap<String, String>(); //node -> IP
 	private String replicationPathsURI;
 	private HashMap<String, Method> replicationPaths = new HashMap<String, Method>(); // startnode -> Method
+	//TODO replicationPaths muss wahrscheinlich String -> List<Method> enthalten
 	protected int sendPort = 8085;
 	private int receivePort = 8086;
 	
@@ -59,18 +59,26 @@ public class Configuration {
 	}
 
 	public void parseHostIPs() throws ParserConfigurationException, SAXException, IOException {
-		HashMap<String, Method> h = new HashMap<String, Method>();
+		HashMap<String, String> h = new HashMap<String, String>();
 		
 		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
 		Document doc = docBuilder.parse(hostsURI);
 		doc.getDocumentElement().normalize();
 		
+		NodeList nodeList = doc.getElementsByTagName("host");
 		
+		for (int i = 0; i < nodeList.getLength(); i++) {
+			Node n = nodeList.item(i);
+			h.put(n.getAttributes().getNamedItem("node").getNodeValue(), 
+					n.getAttributes().getNamedItem("ip").getNodeValue());
+		}
+		hosts = h;
+
 	}
 
 	public void parseReplicationPaths() throws ParserConfigurationException, SAXException, IOException {
-	
+		//TODO Funktioniert nicht für nodeC
 		String startNode;
 		String type;
 		List <String> target = new ArrayList<String>();;
@@ -139,7 +147,13 @@ public class Configuration {
 	 * @return true, if keys are present
 	 */
 	public boolean testAllNodeInformationProvided() {
-		//TODO 
-		return false;
+		Set<String> repKeys = replicationPaths.keySet();
+		Set<String> hostKeys = hosts.keySet();
+		for (String repKey: repKeys) {
+			if (!hostKeys.contains(repKey)) {
+				return false;
+			}
+		}
+		return true;
 	}
 }
