@@ -1,6 +1,7 @@
 package aec;
 
 import java.io.IOException;
+import java.util.Scanner;
 
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -18,6 +19,7 @@ public class Mastermind {
 	static Logger logger = Logger.getLogger(Mastermind.class.getName());
 	
 	public static Configuration c;
+	public static Communication comm;
 
 	/*
 	 * Wir brauchen:
@@ -60,6 +62,8 @@ public class Mastermind {
 			Mastermind.c.setReceivePort(Integer.parseInt(line.getOptionValue("r"))); 
 		}
 		
+		Mastermind.comm = new Communication();
+		
 		c.parseReplicationPaths();
 		logger.info(c.getReplicationPathsStringForStartNode("nodeA"));
 		logger.info(c.getReplicationPathsStringForStartNode("nodeB"));
@@ -71,6 +75,9 @@ public class Mastermind {
 		logger.info(c.getHostStringForNode("nodeC"));
 		
 		//TODO enter option to add value to this node
+		Scanner scanner = new Scanner(System.in);
+		scanner.nextLine();
+		scanner.close();
 	}
 
 }

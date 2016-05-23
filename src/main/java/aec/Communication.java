@@ -1,7 +1,6 @@
 package aec;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 
@@ -18,7 +17,6 @@ import de.tub.ise.hermes.Sender;
 public class Communication {
 	
 	static Logger logger = Logger.getLogger(Communication.class.getName());
-	@SuppressWarnings("unused")
 	private Receiver receiver;
 	
 	public Communication() {
@@ -26,6 +24,7 @@ public class Communication {
 		reg.registerHandler("messages", new MessageRequestHandler());
 		try {
 			receiver = new Receiver(Mastermind.c.getReceivePort());
+			receiver.start();
 		} catch (IOException e) {
 			logger.error("Port " + Mastermind.c.getReceivePort() + " was already taken.");
 			System.exit(1);
@@ -36,6 +35,11 @@ public class Communication {
 		QuorumCollection quorumCollection = new QuorumCollection(message.getKey(), message.getValue());
 		
 		List<Replication> replications = Mastermind.c.getReplicationPathsForStartNode(message.getStartNode());
+		if (replications == null) {
+			//we can just write and do not need to wait for anybody
+			quorumCollection.writeValueToMemory();
+			return;
+		}
 		//save Sender and Request, because it must be send AFTER the quorumCollection was created
 		HashMap<Sender, Request> senderRequest = new HashMap<Sender,Request>();
 		for (Replication r: replications) {
@@ -48,6 +52,7 @@ public class Communication {
 				quorum.addSendRequestID(req.getRequestId());
 				//save Sender and Request to hashmap for later usage
 				senderRequest.put(s, req);
+				logger.debug("Asking node " + node + " with messageID = " + req.getRequestId() + " to replicate.");
 			}
 			quorumCollection.addQuorum(quorum);
 		}
@@ -62,15 +67,17 @@ public class Communication {
 					//add ID to the correct Quorum
 					if (!quorumCollection.addReceivedRequestIDToItsQuorum(resp.getResponseMessage())) {
 						logger.warn("ID " + resp.getResponseMessage() + " could not be assigned to a Quorum!");
+					} else {
+						logger.debug("Response " + resp.getResponseMessage() + " assigned to quorum.");
 					}
-					
 				}
 			});
 		}
 		
 		while (!quorumCollection.writeValueToMemory()) {
 			try {
-				Thread.sleep(100);
+				//TODO we need a timeout and method must return a boolean
+				Thread.sleep(1000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -78,16 +85,19 @@ public class Communication {
 		// data written to memory, we can answer now the one who send a message to us
 	}
 	
+	//TODO rename to ReplicateRequestHandler and change target to "replicate" <- we need this because of get and delete operations
 	class MessageRequestHandler implements IRequestHandler {
 
 		@Override
 		public Response handleRequest(Request req) {
 			Message message = (Message) req.getItems().get(0);
-			logger.info("Received " + message + " from " + 
+			logger.debug("Received " + message + " from " + 
 					req.getOriginator() + " with ID " + req.getRequestId());
 			replicateData(message);
 			//when we are here, we successfully replicated the data and wrote it in our memory
+			//TODO only return resp, when replicateData is successfull
 			Response resp = new Response(req.getRequestId(), true, req);
+			logger.debug("Telling " + req.getOriginator() + " that we replicated.");
 			return resp;
 		}
 
@@ -97,39 +107,5 @@ public class Communication {
 		}
 		
 	}
-	
-	class Message implements Serializable {
-
-		private static final long serialVersionUID = 1886301432166925753L;
-		
-		private String startNode;
-		private Integer key;
-		private String value;
-		
-		public Message(String startNode, Integer key, String value) {
-			this.startNode = startNode;
-			this.key = key;
-			this.value = value;
-		}
-
-		public String getStartNode() {
-			return startNode;
-		}
-
-		public Integer getKey() {
-			return key;
-		}
-
-		public String getValue() {
-			return value;
-		}
-		
-		@Override
-		public String toString() {
-			return "Message(startNode="+startNode+",key="+key+",value="+value+")";
-		}
-		
-	}
-	
 	
 }
