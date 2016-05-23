@@ -83,69 +83,81 @@ public class Configuration {
 	}
 
 	public void parseReplicationPaths() throws ParserConfigurationException, SAXException, IOException {
-		//TODO Funktioniert nicht für nodeC
+
+		int qsize;
 		String startNode;
-		String type;
-		List <String> target = new ArrayList<String>();;
 		String trgNode;
 		String srcNode;
-		int qsize;
-	
-		HashMap<String, Replication> h = new HashMap<String, Replication>();
-	
+		String type;
+
 		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
 		Document doc = docBuilder.parse(replicationPathsURI);
 		doc.getDocumentElement().normalize();
-	
+
 		NodeList pathList = doc.getElementsByTagName("path");
 		for (int temp1 = 0; temp1 < pathList.getLength(); temp1++) {
 			Node n1 = pathList.item(temp1);
 			startNode = n1.getAttributes().getNamedItem("start").getNodeValue();
-	
-			if (startNode.equals(myNode)) {
-	
-				NodeList L = doc.getElementsByTagName("link");
-				for (int a = 0; a < L.getLength(); a++) {
-					Node m = L.item(a);
-					if (m.getParentNode() == n1) {
+			List<Replication> repList = new ArrayList<Replication>();
+
+			NodeList L = doc.getElementsByTagName("link");
+			for (int a = 0; a < L.getLength(); a++) {
+				Node m = L.item(a);
+				if (m.getParentNode() == n1) {
+
+					srcNode = m.getAttributes().getNamedItem("src").getNodeValue();
+
+					if (srcNode.equals(myNode)) {
+						List<String> targetNodes = new ArrayList<String>();
+
 						type = m.getAttributes().getNamedItem("type").getNodeValue();
-						if (type.equals("async")) {
-							srcNode = m.getAttributes().getNamedItem("src").getNodeValue();
-							trgNode =  m.getAttributes().getNamedItem("target").getNodeValue();
-							target.add(trgNode);
-							qsize = 0;
-							Replication m1 = new Replication (type, qsize ,target);
-							h.put(srcNode, m1);
-	
-						} else if (type.equals("sync")) {
-							srcNode = m.getAttributes().getNamedItem("src").getNodeValue();
+
+						switch (type) {
+						case "async":
 							trgNode = m.getAttributes().getNamedItem("target").getNodeValue();
-							target.add(trgNode);
 							qsize = 0;
-							Replication m2 = new Replication (type, qsize ,target);
-							h.put(srcNode, m2);
-	
-						} else if (type.equals("quorum")) {
-							srcNode = m.getAttributes().getNamedItem("src").getNodeValue();
-							qsize = Integer.parseInt( m.getAttributes().getNamedItem("qsize").getNodeValue());
+							targetNodes.add(trgNode);
+							Replication r1 = new Replication(qsize, targetNodes);
+							repList.add(r1);
+							break;
+
+						case "sync":
+							trgNode = m.getAttributes().getNamedItem("target").getNodeValue();
+							qsize = 1;
+							targetNodes.add(trgNode);
+							Replication r2 = new Replication(qsize, targetNodes);
+							repList.add(r2);
+							break;
+
+						case "quorum":
+							qsize = Integer.parseInt(m.getAttributes().getNamedItem("qsize").getNodeValue());
 							NodeList M = doc.getElementsByTagName("qparticipant");
-							for (int b = 0; b < M.getLength(); b++) {
-								Node g = M.item(b);
+							for (int x = 0; x < M.getLength(); x++) {
+								Node g = M.item(x);
 								if (g.getParentNode() == m) {
 									trgNode = g.getAttributes().getNamedItem("name").getNodeValue();
-									target.add(trgNode);
+									targetNodes.add(trgNode);
+
 								}
+
 							}
-							Replication m3 = new Replication (type, qsize ,target);
-							h.put(srcNode, m3);
+							Replication r3 = new Replication(qsize, targetNodes);
+							repList.add(r3);
+							break;
+
 						}
+						replicationPaths.put(startNode, repList);
 					}
+
 				}
+
 			}
+
 		}
-		replicationPaths = h;
+
 	}
+
 
 	/**
 	 * Tests, whether all keys of replicationPaths are present in hosts.
