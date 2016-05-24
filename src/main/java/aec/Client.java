@@ -15,4 +15,13 @@ public class Client {
 		System.out.println(s.sendMessage(req, 10000));
 	}
 	
+	/**
+	 * TODO
+	 * 	- Read in XML file for client
+	 *  - Read in XML file from dropbox for hosts
+	 *  - Create for each input target one thread
+	 *  - start all threads -> send data to desired targets
+	 *  - wait for time specified in sleep
+	 */
+	
 }
