@@ -1,0 +1,16 @@
+nodeA
+DEBUG [09:11:51, 688] aec.Communication          - Received Message(startNode=nodeA,key=1,value=Test-Wert) from client with ID client1
+DEBUG [09:11:51, 690] aec.Communication          - Asking node nodeB with messageID = nodeA1 to replicate.
+DEBUG [09:11:51, 714] aec.Communication          - Response nodeA1 assigned to quorum.
+INFO  [09:11:52, 692] aec.Memory                 - 1 -> Test-Wert
+DEBUG [09:11:52, 693] aec.Communication          - Telling client that we replicated.
+nodeB
+DEBUG [09:11:51, 705] aec.Communication          - Received Message(startNode=nodeA,key=1,value=Test-Wert) from nodeA with ID nodeA1
+DEBUG [09:11:51, 707] aec.Communication          - Asking node nodeC with messageID = nodeB1 to replicate.
+INFO  [09:11:51, 708] aec.Memory                 - 1 -> Test-Wert
+DEBUG [09:11:51, 709] aec.Communication          - Telling nodeA that we replicated.
+DEBUG [09:11:51, 729] aec.Communication          - Response nodeB1 assigned to quorum.
+nodeC
+DEBUG [09:11:51, 725] aec.Communication          - Received Message(startNode=nodeA,key=1,value=Test-Wert) from nodeB with ID nodeB1
+INFO  [09:11:51, 726] aec.Memory                 - 1 -> Test-Wert
+DEBUG [09:11:51, 726] aec.Communication          - Telling nodeB that we replicated.
