@@ -3,8 +3,12 @@ package aec;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
+
+import com.jayway.awaitility.Awaitility;
+import com.jayway.awaitility.Duration;
 
 import de.tub.ise.hermes.AsyncCallbackRecipient;
 import de.tub.ise.hermes.IRequestHandler;
@@ -31,14 +35,13 @@ public class Communication {
 		}
 	}
 	
-	public void replicateData(Message message) {
+	public boolean replicateData(Message message) {
 		QuorumCollection quorumCollection = new QuorumCollection(message.getKey(), message.getValue());
 		
 		List<Replication> replications = Mastermind.c.getReplicationPathsForStartNode(message.getStartNode());
 		if (replications == null) {
 			//we can just write and do not need to wait for anybody
-			quorumCollection.writeValueToMemory();
-			return;
+			return quorumCollection.writeValueToMemory();	
 		}
 		//save Sender and Request, because it must be send AFTER the quorumCollection was created
 		HashMap<Sender, Request> senderRequest = new HashMap<Sender,Request>();
@@ -73,15 +76,18 @@ public class Communication {
 				}
 			});
 		}
-		
+		/*
+		 * Old approch without timeout and "busy waiting"
 		while (!quorumCollection.writeValueToMemory()) {
 			try {
-				//TODO we need a timeout and method must return a boolean
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 		}
+		*/
+		Awaitility.await().atMost(new Duration(10, TimeUnit.SECONDS)).until(quorumCollection.checkAllQuorumsSuccessfulCallable());
+		return quorumCollection.writeValueToMemory();
 		// data written to memory, we can answer now the one who send a message to us
 	}
 	
