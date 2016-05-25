@@ -9,6 +9,7 @@ import org.apache.log4j.Logger;
 
 import com.jayway.awaitility.Awaitility;
 import com.jayway.awaitility.Duration;
+import com.jayway.awaitility.core.ConditionTimeoutException;
 
 import de.tub.ise.hermes.AsyncCallbackRecipient;
 import de.tub.ise.hermes.IRequestHandler;
@@ -25,7 +26,7 @@ public class Communication {
 	
 	public Communication() {
 		RequestHandlerRegistry reg = RequestHandlerRegistry.getInstance();
-		reg.registerHandler("messages", new MessageRequestHandler());
+		reg.registerHandler("replicate", new ReplicateRequestHandler());
 		try {
 			receiver = new Receiver(Mastermind.c.getReceivePort());
 			receiver.start();
@@ -50,7 +51,7 @@ public class Communication {
 			//do this for all nodes of quorum
 			for (String node: r.getTargetNodes()) {
 				Sender s = new Sender(Mastermind.c.getHostIPForNode(node), Mastermind.c.getHostPortForNode(node));
-				Request req = new Request(message, "messages", Mastermind.c.getMyNode());
+				Request req = new Request(message, "replicate", Mastermind.c.getMyNode());
 				//add ID to quorum
 				quorum.addSendRequestID(req.getRequestId());
 				//save Sender and Request to hashmap for later usage
@@ -67,6 +68,9 @@ public class Communication {
 				
 				@Override
 				public void callback(Response resp) {
+					if (resp.responseCode() == false) {
+						logger.warn("Target of message " + resp.getResponseMessage() + " could not replicate.");
+					}
 					//add ID to the correct Quorum
 					if (!quorumCollection.addReceivedRequestIDToItsQuorum(resp.getResponseMessage())) {
 						logger.warn("ID " + resp.getResponseMessage() + " could not be assigned to a Quorum!");
@@ -86,24 +90,32 @@ public class Communication {
 			}
 		}
 		*/
-		Awaitility.await().atMost(new Duration(10, TimeUnit.SECONDS)).until(quorumCollection.checkAllQuorumsSuccessfulCallable());
+		try {
+			Awaitility.await().atMost(new Duration(10, TimeUnit.SECONDS)).until(quorumCollection.checkAllQuorumsSuccessfulCallable());
+		} catch(ConditionTimeoutException e) {
+			logger.warn(e.getMessage());
+			return false;
+		}
 		return quorumCollection.writeValueToMemory();
 		// data written to memory, we can answer now the one who send a message to us
 	}
 	
-	//TODO rename to ReplicateRequestHandler and change target to "replicate" <- we need this because of get and delete operations
-	class MessageRequestHandler implements IRequestHandler {
+	class ReplicateRequestHandler implements IRequestHandler {
 
 		@Override
 		public Response handleRequest(Request req) {
 			Message message = (Message) req.getItems().get(0);
 			logger.debug("Received " + message + " from " + 
 					req.getOriginator() + " with ID " + req.getRequestId());
-			replicateData(message);
-			//when we are here, we successfully replicated the data and wrote it in our memory
-			//TODO only return resp, when replicateData is successfull
-			Response resp = new Response(req.getRequestId(), true, req);
-			logger.debug("Telling " + req.getOriginator() + " that we replicated.");
+			if (replicateData(message)) {
+				//when we are here, we successfully replicated the data and wrote it in our memory
+				Response resp = new Response(req.getRequestId(), true, req);
+				logger.debug("Telling " + req.getOriginator() + " that we replicated.");
+				return resp;
+			}
+			//replication failed
+			Response resp = new Response(req.getRequestId(), false, req);
+			logger.warn("We were unable to replicate the data.");
 			return resp;
 		}
 
