@@ -27,6 +27,8 @@ public class Communication {
 	public Communication() {
 		RequestHandlerRegistry reg = RequestHandlerRegistry.getInstance();
 		reg.registerHandler("replicate", new ReplicateRequestHandler());
+		reg.registerHandler("get", new GetRequestHandler());
+		reg.registerHandler("delete", new DeleteRequestHandler());
 		try {
 			receiver = new Receiver(Mastermind.c.getReceivePort());
 			receiver.start();
@@ -104,6 +106,7 @@ public class Communication {
 
 		@Override
 		public Response handleRequest(Request req) {
+			// the message is the first item of the request
 			Message message = (Message) req.getItems().get(0);
 			logger.debug("Received " + message + " from " + 
 					req.getOriginator() + " with ID " + req.getRequestId());
@@ -122,6 +125,45 @@ public class Communication {
 		@Override
 		public boolean requiresResponse() {
 			return true;
+		}
+		
+	}
+	
+	class GetRequestHandler implements IRequestHandler {
+
+		@Override
+		public Response handleRequest(Request req) {
+			// the key is the first item of the request
+			Integer key;
+			Response resp = new Response("", false, req);
+			try {
+				key = Integer.parseInt((String) req.getItems().get(0));
+				resp = new Response(Memory.get(key), true, req);
+				logger.debug("Returning " + resp.getResponseMessage() + " for key " + key);
+			} catch (Exception e) {
+				logger.warn("Key " + req.getItems().get(0) + " was no Integer.");
+			}
+			return resp;
+		}
+
+		@Override
+		public boolean requiresResponse() {
+			return true;
+		}
+		
+	}
+	
+	class DeleteRequestHandler implements IRequestHandler {
+
+		@Override
+		public Response handleRequest(Request req) {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public boolean requiresResponse() {
+			return false;
 		}
 		
 	}
