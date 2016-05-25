@@ -157,13 +157,49 @@ public class Communication {
 
 		@Override
 		public Response handleRequest(Request req) {
-			// TODO Auto-generated method stub
-			return null;
+			// the key is the first item of the request
+			Integer key = -1;
+			Response resp = new Response("", false, req);
+			try {
+				key = Integer.parseInt((String) req.getItems().get(0));
+				resp = new Response(Memory.delete(key), true, req);
+				logger.debug("Deleted " + resp.getResponseMessage() + " for key " + key);
+			} catch (Exception e) {
+				logger.warn("Key " + req.getItems().get(0) + " was no Integer.");
+				return resp;
+			}
+			// send to all other nodes message to delete async, if second item is a 1
+			try {
+				Integer second = Integer.parseInt((String) req.getItems().get(1));
+				if (second == 1) {
+					logger.debug("Asking all other nodes to delete key " + key);
+					List<String[]> hosts = Mastermind.c.getAllHosts();
+					for (String[] hostA: hosts) {
+						if (hostA[0].equals(Mastermind.c.getHostIPForNode(Mastermind.c.getMyNode())) && 
+								hostA[1].equals(""+Mastermind.c.getHostPortForNode(Mastermind.c.getMyNode()))) {
+							// don't send message to ourself
+						} else {
+							Sender s = new Sender(hostA[0], Integer.parseInt(hostA[1]));
+							Request req2 = new Request("" + key, "delete", Mastermind.c.getMyNode());
+							s.sendMessageAsync(req2, new AsyncCallbackRecipient() {
+								
+								@Override
+								public void callback(Response resp) {
+									logger.info("Got response that " + resp.getResponseMessage() + " was deleted."); 
+								}
+							});
+						}	
+					}
+				}
+			} catch (Exception e) {
+				// do nothing, we don't need to send it
+			}
+			return resp;
 		}
 
 		@Override
 		public boolean requiresResponse() {
-			return false;
+			return true;
 		}
 		
 	}

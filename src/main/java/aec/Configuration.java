@@ -46,6 +46,14 @@ public class Configuration {
 	public String getHostStringForNode(String node) {
 		return node + " = " + hosts.get(node);
 	}
+	
+	public List<String[]> getAllHosts() {
+		List<String[]> list = new ArrayList<>();
+		for (String host: this.hosts.values()) {
+			list.add(new String[] {host.split(":")[0], host.split(":")[1]});
+		}
+		return list;
+	}
 
 	public List<Replication> getReplicationPathsForStartNode(String node) {
 		return replicationPaths.get(node);
