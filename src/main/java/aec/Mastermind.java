@@ -68,13 +68,14 @@ public class Mastermind {
 		logger.info(c.getReplicationPathsStringForStartNode("nodeA"));
 		logger.info(c.getReplicationPathsStringForStartNode("nodeB"));
 		logger.info(c.getReplicationPathsStringForStartNode("nodeC"));
+		logger.info(c.getReplicationPathsStringForStartNode("nodeD"));
 		c.parseHosts();
 		logger.info("All information provided?: " + c.testAllNodeInformationProvided());
 		logger.info(c.getHostStringForNode("nodeA"));
 		logger.info(c.getHostStringForNode("nodeB"));
 		logger.info(c.getHostStringForNode("nodeC"));
+		logger.info(c.getHostStringForNode("nodeD"));
 		
-		//TODO enter option to add value to this node
 		Scanner scanner = new Scanner(System.in);
 		scanner.nextLine();
 		scanner.close();
