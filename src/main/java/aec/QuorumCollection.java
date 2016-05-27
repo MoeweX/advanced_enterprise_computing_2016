@@ -2,6 +2,7 @@ package aec;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 /**
  * Class to collect Quorums for one update in the Memory.
@@ -54,6 +55,17 @@ public class QuorumCollection {
 		return successfull;
 	}
 	
+	public Callable<Boolean> checkAllQuorumsSuccessfulCallable() {
+		return new Callable<Boolean>() {
+
+			@Override
+			public Boolean call() throws Exception {
+				return checkAllQuorumsSuccessful();
+			}
+			
+		};
+	}
+	
 	/**
 	 * Writes a value to Memory, if all related Quorums are successful and did not write before.
 	 * Otherwise returns false.
@@ -67,4 +79,5 @@ public class QuorumCollection {
 		}
 		return false;
 	}
+
 }
