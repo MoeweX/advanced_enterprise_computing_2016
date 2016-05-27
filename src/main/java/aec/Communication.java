@@ -1,8 +1,10 @@
 package aec;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
@@ -29,6 +31,7 @@ public class Communication {
 		reg.registerHandler("replicate", new ReplicateRequestHandler());
 		reg.registerHandler("get", new GetRequestHandler());
 		reg.registerHandler("delete", new DeleteRequestHandler());
+		reg.registerHandler("alive", new AliveRequestHandler());
 		try {
 			receiver = new Receiver(Mastermind.c.getReceivePort());
 			receiver.start();
@@ -36,6 +39,66 @@ public class Communication {
 			logger.error("Port " + Mastermind.c.getReceivePort() + " was already taken.");
 			System.exit(1);
 		}
+	}
+	
+	/**
+	 * Before data is replicated, ask all sync nodes in replications, whether they are alive.
+	 * Needs message, because the target node also needs to check its sync nodes for beeing alive, 
+	 * and the message stores the startNode.
+	 * @param replications
+	 * @param message
+	 * @return true, if all snyc nodes are alive, otherwise false
+	 */
+	public boolean testAlive(List<Replication> replications, Message message) {
+		List<String> requestIDs = new ArrayList<String>();
+		//save Sender and Request, because it must be send AFTER the IDs were saved
+		HashMap<Sender, Request> senderRequest = new HashMap<Sender,Request>();
+		for (Replication r: replications) {
+			if (r.getQsize() == 1 && r.getTargetNodes().size() == 1) {
+				String node = r.getTargetNodes().get(0);
+				Sender s = new Sender(Mastermind.c.getHostIPForNode(node), Mastermind.c.getHostPortForNode(node));
+				Request req = new Request(message, "alive", Mastermind.c.getMyNode());
+				//add ID to requestIDs
+				requestIDs.add(req.getRequestId());
+				//save Sender and Request to hashmap for later usage
+				senderRequest.put(s, req);
+				logger.debug("Asking sync-node " + node + " with messageID = " + req.getRequestId() + " wether it is alive.");
+			}
+		}
+		// now send all messages and create callbacks
+		for (Sender s: senderRequest.keySet()) {
+			Request req = senderRequest.get(s);
+			s.sendMessageAsync(req, new AsyncCallbackRecipient() {
+				
+				@Override
+				public void callback(Response resp) {
+					if (resp.responseCode() == false) {
+						logger.warn("Target of message " + resp.getResponseMessage() + " is not alive.");
+					}
+					//remove ID from requestIDs
+					if (!requestIDs.remove(resp.getResponseMessage())) {
+						logger.warn("ID " + resp.getResponseMessage() + " was not in list of asked sync-nodes!");
+					} else {
+						logger.debug("Response " + resp.getResponseMessage() + " tells that node is alive.");
+					}
+				}
+			});
+		}
+
+		try {
+			Awaitility.setDefaultPollDelay(10, TimeUnit.MILLISECONDS);
+			Awaitility.await().atMost(new Duration(10, TimeUnit.SECONDS)).until(new Callable<Boolean>() {
+				
+				@Override
+				public Boolean call() throws Exception {
+					return requestIDs.isEmpty();
+				}
+			});
+		} catch(ConditionTimeoutException e) {
+			logger.warn(e.getMessage());
+			return false;
+		}	
+		return true;
 	}
 	
 	public boolean replicateData(Message message) {
@@ -46,6 +109,11 @@ public class Communication {
 			//we can just write and do not need to wait for anybody
 			return quorumCollection.writeValueToMemory();	
 		}
+		//ask all sync nodes, weather they are available, if one does not respond -> replication fails
+		if (!testAlive(replications, message)) {
+			return false;
+		}
+		
 		//save Sender and Request, because it must be send AFTER the quorumCollection was created
 		HashMap<Sender, Request> senderRequest = new HashMap<Sender,Request>();
 		for (Replication r: replications) {
@@ -82,17 +150,9 @@ public class Communication {
 				}
 			});
 		}
-		/*
-		 * Old approch without timeout and "busy waiting"
-		while (!quorumCollection.writeValueToMemory()) {
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-		*/
+
 		try {
+			Awaitility.setDefaultPollDelay(10, TimeUnit.MILLISECONDS);
 			Awaitility.await().atMost(new Duration(10, TimeUnit.SECONDS)).until(quorumCollection.checkAllQuorumsSuccessfulCallable());
 		} catch(ConditionTimeoutException e) {
 			logger.warn(e.getMessage());
@@ -120,6 +180,37 @@ public class Communication {
 			Response resp = new Response(req.getRequestId(), false, req);
 			logger.warn("We were unable to replicate the data.");
 			return resp;
+		}
+
+		@Override
+		public boolean requiresResponse() {
+			return true;
+		}
+		
+	}
+	
+	class AliveRequestHandler implements IRequestHandler {
+
+		@Override
+		public Response handleRequest(Request req) {
+			// the message is the first item of the request
+			Message message = (Message) req.getItems().get(0);
+			logger.debug(req.getOriginator() + " asks wether we are alive.");
+			List<Replication> replications = Mastermind.c.getReplicationPathsForStartNode(message.getStartNode());
+			if (replications == null) {
+				//we can just answer alive
+				logger.debug("Telling " + req.getOriginator() + " that I and all other nodes after me are alive");
+				return new Response(req.getRequestId(), true, req);
+			} else {
+				if (testAlive(replications, message)) {
+					//when we are here, all sync nodes after me are alive
+					logger.debug("Telling " + req.getOriginator() + " that I and all other nodes after we are alive");
+					return new Response(req.getRequestId(), true, req);
+				}
+			}
+			//not all sync nodes are alive
+			logger.warn("Some nodes are not alive!");
+			return new Response(req.getRequestId(), false, req);
 		}
 
 		@Override
