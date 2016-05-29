@@ -5,6 +5,7 @@ import java.util.Arrays;
 import de.tub.ise.hermes.Request;
 import de.tub.ise.hermes.Sender;
 
+@SuppressWarnings("unused")
 public class Client {
 
 	private static String host = "localhost";
@@ -27,14 +28,5 @@ public class Client {
 		System.out.println(s3.sendMessage(req3, 15000));
 		*/
 	}
-	
-	/**
-	 * TODO
-	 * 	- Read in XML file for client
-	 *  - Read in XML file from dropbox for hosts
-	 *  - Create for each input target one thread
-	 *  - start all threads -> send data to desired targets
-	 *  - wait for time specified in sleep
-	 */
 	
 }
