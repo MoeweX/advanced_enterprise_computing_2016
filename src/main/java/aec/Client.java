@@ -9,12 +9,12 @@ import de.tub.ise.hermes.Sender;
 public class Client {
 
 	private static String host = "localhost";
-	private static int port = 8084;
+	private static int port = 8081;
 	
 	public static void main(String[] args) {
 		
 		Sender s = new Sender(host, port);
-		Message m = new Message("nodeD", 1, "Test-Wert");
+		Message m = new Message("nodeA", 1, "Test-Wert");
 		Request req = new Request(m, "replicate", "client");
 		System.out.println(s.sendMessage(req, 15000));
 		

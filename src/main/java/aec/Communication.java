@@ -109,10 +109,12 @@ public class Communication {
 			//we can just write and do not need to wait for anybody
 			return quorumCollection.writeValueToMemory();	
 		}
+		
+		/* DAVID DOES NOT WANT THIS
 		//ask all sync nodes, weather they are available, if one does not respond -> replication fails
 		if (!testAlive(replications, message)) {
 			return false;
-		}
+		} */
 		
 		//save Sender and Request, because it must be send AFTER the quorumCollection was created
 		HashMap<Sender, Request> senderRequest = new HashMap<Sender,Request>();
