@@ -154,7 +154,7 @@ public class Communication {
 		}
 
 		try {
-			Awaitility.setDefaultPollDelay(10, TimeUnit.MILLISECONDS);
+			Awaitility.setDefaultPollDelay(1, TimeUnit.MICROSECONDS);
 			Awaitility.await().atMost(new Duration(10, TimeUnit.SECONDS)).until(quorumCollection.checkAllQuorumsSuccessfulCallable());
 		} catch(ConditionTimeoutException e) {
 			logger.warn(e.getMessage());
